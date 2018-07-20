@@ -12,7 +12,7 @@ const cheerio = require("cheerio");
 // Require the models
 var database = require("./models");
 // Server connection port
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 // Initialize Express server
 const app = express();
@@ -132,7 +132,7 @@ app.post("/clear", function (req, res) {
 });
 
 // Open the port for server listen to request
-app.listen(PORT, function () {
+app.listen(PORT, "0.0.0.0", function () {
     console.log("App running on port " + PORT);
 })
 // app.get("/", function (req, res) {
