@@ -6,12 +6,12 @@ const Schema = mongoose.Schema;
 
 // Create the actual Schema(new user schema object)
 const NewsSchema = new Schema({
-    briefs: {
+    headline: {
         type: String,
         required: true
     },
     // link to new article
-    link: {
+    url: {
         type: String,
         required: true
     },

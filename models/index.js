@@ -1,5 +1,5 @@
 // Exports all models
 module.exports = {
     News: require("./News"),
-    Commment: require("./Comments"),
+    Comment: require("./Comment"),
 }

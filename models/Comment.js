@@ -6,11 +6,11 @@ const Schema = mongoose.Schema;
 
 // Create the actual Schema(new user schema object)
 const CommentSchema = new Schema({
-    title: {
+    _headlineId: {
         type: String,
         required: true,
     },
-    comments: {
+    commentText: {
         type: String,
         required: true
     },
