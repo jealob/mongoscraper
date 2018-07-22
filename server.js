@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 
 // Require Scraping tool dependencies
 // require axios
+const request = require("request")
 const axios = require("axios");
 const cheerio = require("cheerio");
 
@@ -64,34 +65,41 @@ app.get("/api/headlines", function (req, res) {
 });
 
 app.get("/api/fetch", function (req, res) {
-    axios.get("https://www.naija.ng/").then(response => {
+    let results = [];
+    request("https://www.naija.ng/", function (error, response, html) {
         // Load Cheerio
-        let $ = cheerio.load(response.data);
+        let $ = cheerio.load(html);
+
         // Select each element in the HTML body to scrape data
         $("li.news-list__item").each(function (i, element) {
-            let headline = $(element).children("a").text();
-            let url = $(element).children("a").attr("href");
 
-            // console.log(headline)
-            database.News.create({
-                "headline": headline,
-                "url": url
-            }).then(function (dbNews) {
-                
-
-            }).catch(function (error) {
-                return res.json(error);
+            results.push({
+                headline: $(element).children("a").text(),
+                url: $(element).children("a").attr("href")
             });
         });
-        
+
+        results.map((news) => {
+            database.News.create({
+                "headline": news.headline,
+                "url": news.url,
+            },
+                {
+                    upsert: true, new: true, setDefaultsOnInsert: true
+                }).then(function (dbNews) {
+                }).catch(function (error) {
+                    return res.json(error);
+                });
+        });
+        res.json(results.length);
     });
+
 });
 
 // Route for grabbing a specific Article by id, and updatindg the save field to true
 app.put("/api/headlines/:id", function (req, res) {
     database.News.update({ _id: req.params.id }, { saved: req.body.saved })
         .then(function (dbNews) {
-            console.log(dbNews)
             res.json(dbNews);
         })
         .catch(function (error) {
@@ -102,13 +110,11 @@ app.put("/api/headlines/:id", function (req, res) {
 // Route for grabbing a specific Article by id, populate it with it's comment(s)
 app.get("/api/comments/:id", function (req, res) {
     // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-    console.log(req.params.id);
     database.News.findOne({ _id: req.params.id })
         // ..and populate all of the notes associated with it
         .populate("comment")
         .then(function (dbNews) {
             // If we were able to successfully find an Article with the given id, send it back to the client
-            console.log("populated:", dbNews)
             res.json(dbNews);
         })
         .catch(function (err) {
@@ -122,7 +128,6 @@ app.post("/api/comments", function (req, res) {
     // Create a new note and pass the req.body to the entry
     database.Comment.create(req.body)
         .then(function (dbComment) {
-            // console.log(dbComment)
             // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
             // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
             // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
@@ -140,9 +145,8 @@ app.post("/api/comments", function (req, res) {
 
 // Route for grabbing a specific Article by id, and updatindg the save field to true
 app.delete("/api/comments/:id", function (req, res) {
-    database.News.remove({ _id: req.params.id })
+    database.Comment.remove({ _id: req.params.id })
         .then(function (dbNews) {
-            console.log(dbNews)
             res.json(dbNews);
         })
         .catch(function (error) {
@@ -154,7 +158,7 @@ app.delete("/api/comments/:id", function (req, res) {
 app.get("/api/clear", function (req, res) {
     database.News.remove({})
         .then(function (dbNews) {
-            console.log(dbNews)
+
             res.json(dbNews);
         })
         .catch(function (error) {
@@ -165,8 +169,5 @@ app.get("/api/clear", function (req, res) {
 // Open the port for server to listen to requests
 app.listen(PORT, "0.0.0.0", function () {
     console.log("App running on port " + PORT);
-})
-// app.get("/", function (req, res) {
-//     res.send("home");
-// });
+});
 

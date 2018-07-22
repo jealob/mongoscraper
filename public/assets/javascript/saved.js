@@ -43,7 +43,7 @@ $(document).ready(function () {
     // This function takes in a single JSON object for an article/headline
     // It constructs a jQuery element containing all of the formatted HTML for the
     // article card
-    // console.log(article)
+
     var card = $("<div class='card'>");
     var cardHeader = $("<div class='card-header'>").append(
       $("<h3>").append(
@@ -63,8 +63,6 @@ $(document).ready(function () {
     // We will use this when trying to figure out which article the user wants to remove or open notes for
     card.data("_id", article._id);
     // We return the constructed card jQuery element
-    // debugger;
-    // console.log(card)
     return card;
   }
 
@@ -102,21 +100,18 @@ $(document).ready(function () {
       .parents(".card")
       .remove();
     articleToDelete.saved = false;
-    console.log("yes", articleToDelete)
     // Using a delete method here just to be semantic since we are deleting an article/headline
     $.ajax({
       method: "PUT",
       url: "/api/headlines/" + articleToDelete._id,
       data: articleToDelete
     }).then(function (data) {
-      console.log(data)
       // If this works out, run initPage again which will re-render our list of saved articles
       if (data.ok) {
         initPage();
       }
     });
   }
-
 
   function handleNewsComments(event) {
     // This function handles opening the notes modal and displaying our notes
@@ -146,7 +141,6 @@ $(document).ready(function () {
         _id: currentNewsArticle._id,
         comments: data.comment || []
       };
-      console.log("data returned: ", commentData)
       // Adding some information about the article and article comments to the save button for easy access
       // When trying to add a new comment
       $(".btn.save").data("article", commentData);
@@ -167,7 +161,6 @@ $(document).ready(function () {
     } else {
       // If we do have notes, go through each one
       for (var i = 0; i < data.comments.length; i++) {
-        console.log(data.comments[i])
         // Constructs an li element to contain our noteText and a delete button
         currentComment = $("<li class='list-group-item note'>")
           .text(data.comments[i].commentText)
@@ -178,7 +171,6 @@ $(document).ready(function () {
         commentsToRender.push(currentComment);
       }
     }
-    // console.log(commentsToRender)
     // Now append the commentsToRender to the note-container inside the note modal
     $(".note-container").append(commentsToRender);
   }
@@ -196,10 +188,9 @@ $(document).ready(function () {
     // and post it to the "/api/notes" route and send the formatted commentData as well
     if (newComment) {
       commentData = { _headlineId: $(this).data("article")._id, commentText: newComment };
-      console.log(commentData)
+
       $.post("/api/comments", commentData).then(function (data) {
         // When complete, close the modal
-        console.log(data)
         bootbox.hideAll();
       });
     }
@@ -209,12 +200,12 @@ $(document).ready(function () {
     // This function handles the deletion of notes
     // First we grab the id of the note we want to delete
     // We stored this data on the delete button when we created it
-    // console.log($(this));
+
     var commentToDelete = $(this).data("_id");
 
     // Perform an DELETE request to "/api/notes/" with the id of the note we're deleting as a parameter
     $.ajax({
-      url: "/api/comments/" + commentToDelete._id,
+      url: "/api/comments/" + commentToDelete,
       method: "DELETE"
     }).then(function () {
       // When done, hide the modal

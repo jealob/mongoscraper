@@ -1,6 +1,5 @@
 /* global bootbox */
 $(document).ready(function () {
-  console.log("something");
   // Setting a reference to the article-container div where all the dynamic content will go
   // Adding event listeners to any dynamically generated "save article"
   // and "scrape new article" buttons
@@ -16,7 +15,6 @@ $(document).ready(function () {
     $.get("/api/headlines?saved=false").then(function (data) {
       articleContainer.empty();
       // If we have headlines, render them to the page
-      console.log(data)
       if (data && data.length) {
         renderArticles(data);
       } else {
@@ -108,8 +106,6 @@ $(document).ready(function () {
       url: "/api/headlines/" + newsArticleToSave._id,
       data: newsArticleToSave
     }).then(function (data) {
-      console.log(data);
-      // debugger;
       // If the data was saved successfully
       if (data.ok) {
         // Run the initPage function again. This will reload the entire list of articles
@@ -119,17 +115,21 @@ $(document).ready(function () {
   }
 
   function handleNewsArticleScrape() {
-
     // This function handles the user clicking any "scrape new article" buttons
     $.get("/api/fetch").then(function (data) {
       // If we are able to successfully scrape the NYTIMES and compare the articles to those
       // already in our collection, re render the articles on the page
       // and let the user know how many unique articles we were able to save
-      console.log("yes");
-      // debugger;
+      
+      // let message;
+      // if (data === 1) { message = "1 new News Article was added" }
+      // else if (data > 1) { message = data, " new News Article was added" }
+      // else { { message = "No new News Article was added" } }
+
+      bootbox.alert({
+        message: $("<h3 class='text-center m-top-80'>").text("Scraped for new News Articles"),
+      });
       initPage();
-      console.log(data)
-      bootbox.alert($("<h3 class='text-center m-top-80'>").text(data.message));
     });
   }
 
