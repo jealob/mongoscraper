@@ -8,11 +8,9 @@ const Schema = mongoose.Schema;
 const CommentSchema = new Schema({
     _headlineId: {
         type: String,
-        required: true,
     },
     commentText: {
         type: String,
-        required: true
     },
     date: {
         type: Date,
@@ -21,7 +19,7 @@ const CommentSchema = new Schema({
 });
 
 // Creates the model for the database using mongoose model method
-const Comment = mongoose.model("Comments", CommentSchema);
+const Comment = mongoose.model("Comment", CommentSchema);
 
 // Export Model 
 module.exports = Comment

@@ -77,19 +77,19 @@ app.get("/api/fetch", function (req, res) {
                 "headline": headline,
                 "url": url
             }).then(function (dbNews) {
-                console.log(dbNews);
+                
+
             }).catch(function (error) {
                 return res.json(error);
             });
         });
-        // res.send("Data Scraped");
+        
     });
 });
 
 // Route for grabbing a specific Article by id, and updatindg the save field to true
 app.put("/api/headlines/:id", function (req, res) {
-
-    database.News.findOneAndUpdate({ _id: req.params.id }, { saved: req.body.saved })
+    database.News.update({ _id: req.params.id }, { saved: req.body.saved })
         .then(function (dbNews) {
             console.log(dbNews)
             res.json(dbNews);
@@ -99,16 +99,16 @@ app.put("/api/headlines/:id", function (req, res) {
         })
 });
 
-// Route for grabbing a specific Article by id, populate it with it's note
+// Route for grabbing a specific Article by id, populate it with it's comment(s)
 app.get("/api/comments/:id", function (req, res) {
     // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-    
+    console.log(req.params.id);
     database.News.findOne({ _id: req.params.id })
         // ..and populate all of the notes associated with it
         .populate("comment")
         .then(function (dbNews) {
             // If we were able to successfully find an Article with the given id, send it back to the client
-            console.log(dbNews)
+            console.log("populated:", dbNews)
             res.json(dbNews);
         })
         .catch(function (err) {
@@ -118,19 +118,18 @@ app.get("/api/comments/:id", function (req, res) {
 });
 
 // Route for saving/updating an Article's associated Note
-app.post("/api/comments/:id", function (req, res) {
+app.post("/api/comments", function (req, res) {
     // Create a new note and pass the req.body to the entry
-    console.log(req.params)
     database.Comment.create(req.body)
         .then(function (dbComment) {
+            // console.log(dbComment)
             // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
             // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
             // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
-            return database.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbComment._id }, { new: true });
+            return database.News.findOneAndUpdate({ _id: req.body._headlineId }, { $push: { comment: dbComment._id } }, { new: true });
         })
         .then(function (dbNews) {
             // If we were able to successfully update an Article, send it back to the client
-            console.log(dbNews)
             res.json(dbNews);
         })
         .catch(function (err) {
@@ -139,6 +138,29 @@ app.post("/api/comments/:id", function (req, res) {
         });
 });
 
+// Route for grabbing a specific Article by id, and updatindg the save field to true
+app.delete("/api/comments/:id", function (req, res) {
+    database.News.remove({ _id: req.params.id })
+        .then(function (dbNews) {
+            console.log(dbNews)
+            res.json(dbNews);
+        })
+        .catch(function (error) {
+            res.json(error);
+        })
+});
+
+// Route for deleting all the data from the database
+app.get("/api/clear", function (req, res) {
+    database.News.remove({})
+        .then(function (dbNews) {
+            console.log(dbNews)
+            res.json(dbNews);
+        })
+        .catch(function (error) {
+            res.json(error);
+        })
+});
 // ------------------------------------------------------------
 // Open the port for server to listen to requests
 app.listen(PORT, "0.0.0.0", function () {

@@ -4,10 +4,10 @@ $(document).ready(function () {
   var articleContainer = $(".article-container");
   // Adding event listeners for dynamically generated buttons for deleting articles,
   // pulling up article notes, saving article notes, and deleting article notes
-  $(document).on("click", ".btn.delete", handleArticleDelete);
-  $(document).on("click", ".btn.notes", handleArticleNotes);
-  $(document).on("click", ".btn.save", handleNoteSave);
-  $(document).on("click", ".btn.note-delete", handleNoteDelete);
+  $(document).on("click", ".btn.delete", handleNewsArticleDelete);
+  $(document).on("click", ".btn.notes", handleNewsComments);
+  $(document).on("click", ".btn.save", handleCommentSave);
+  $(document).on("click", ".btn.note-delete", handleCommentDelete);
   $(".clear").on("click", handleArticleClear);
   initPage()
   function initPage() {
@@ -43,6 +43,7 @@ $(document).ready(function () {
     // This function takes in a single JSON object for an article/headline
     // It constructs a jQuery element containing all of the formatted HTML for the
     // article card
+    // console.log(article)
     var card = $("<div class='card'>");
     var cardHeader = $("<div class='card-header'>").append(
       $("<h3>").append(
@@ -62,6 +63,8 @@ $(document).ready(function () {
     // We will use this when trying to figure out which article the user wants to remove or open notes for
     card.data("_id", article._id);
     // We return the constructed card jQuery element
+    // debugger;
+    // console.log(card)
     return card;
   }
 
@@ -87,36 +90,7 @@ $(document).ready(function () {
     articleContainer.append(emptyAlert);
   }
 
-  function renderNotesList(data) {
-    // This function handles rendering note list items to our notes modal
-    // Setting up an array of notes to render after finished
-    // Also setting up a currentNote variable to temporarily store each note
-    var notesToRender = [];
-    var currentNote;
-    if (!data.notes.length) {
-
-      // If we have no notes, just display a message explaining this
-      currentNote = $("<li class='list-group-item'>No notes for this article yet.</li>");
-      notesToRender.push(currentNote);
-    } else {
-      // If we do have notes, go through each one
-      for (var i = 0; i < data.notes.length; i++) {
-        // Constructs an li element to contain our noteText and a delete button
-        currentNote = $("<li class='list-group-item note'>")
-          .text(data.notes[i].noteText)
-          .append($("<button class='btn btn-danger note-delete'>x</button>"));
-        // Store the note id on the delete button for easy access when trying to delete
-        currentNote.children("button").data("_id", data.notes[i]._id);
-        // Adding our currentNote to the notesToRender array
-        notesToRender.push(currentNote);
-      }
-    }
-    console.log(notesToRender)
-    // Now append the notesToRender to the note-container inside the note modal
-    $(".note-container").append(notesToRender);
-  }
-
-  function handleArticleDelete() {
+  function handleNewsArticleDelete() {
     // This function handles deleting articles/headlines
     // We grab the id of the article to delete from the card element the delete button sits inside
     var articleToDelete = $(this)
@@ -143,26 +117,19 @@ $(document).ready(function () {
     });
   }
 
-  $(document).on("click", ".alert", function (e) {
-    console.log("currentArticle")
-    bootbox.alert("Hello world!", function () {
-      console.log("Alert Callback");
-    });
-  });
 
-  function handleArticleNotes(event) {
+  function handleNewsComments(event) {
     // This function handles opening the notes modal and displaying our notes
     // We grab the id of the article to get notes for from the card element the delete button sits inside
-    var currentArticle = $(this)
+    var currentNewsArticle = $(this)
       .parents(".card")
       .data();
-    console.log(currentArticle)
-    // Grab any notes with this headline/article id
-    $.get("/api/comments/" + currentArticle._id).then(function (data) {
-      // Constructing our initial HTML to add to the notes modal
 
+    // Grab any notes with this headline/article id
+    $.get("/api/comments/" + currentNewsArticle._id).then(function (data) {
+      // Constructing our initial HTML to add to the notes modal
       var modalText = $("<div class='container-fluid text-center'>").append(
-        $("<h4>").text("Notes For Article: " + currentArticle._id),
+        $("<h4>").text("Notes For Article: " + currentNewsArticle._id),
         $("<hr>"),
         $("<ul class='list-group note-container'>"),
         $("<textarea placeholder='New Note' rows='4' cols='60'>"),
@@ -174,20 +141,49 @@ $(document).ready(function () {
         message: modalText,
         closeButton: true
       });
+
       var commentData = {
-        _id: currentArticle._id,
-        notes: data || []
+        _id: currentNewsArticle._id,
+        comments: data.comment || []
       };
-      console.log(commentData)
+      console.log("data returned: ", commentData)
       // Adding some information about the article and article comments to the save button for easy access
       // When trying to add a new comment
       $(".btn.save").data("article", commentData);
-      // renderNotesList will populate the actual note HTML inside of the modal we just created/opened
-      renderNotesList(commentData);
+      // renderCommentList will populate the actual note HTML inside of the modal we just created/opened
+      renderCommentList(commentData);
     });
   }
+  function renderCommentList(data) {
+    // This function handles rendering note list items to our notes modal
+    // Setting up an array of notes to render after finished
+    // Also setting up a currentComment variable to temporarily store each note
+    var commentsToRender = [];
+    var currentComment;
+    if (!data.comments.length) {
+      // If we have no notes, just display a message explaining this
+      currentComment = $("<li class='list-group-item'>No notes for this article yet.</li>");
+      commentsToRender.push(currentComment);
+    } else {
+      // If we do have notes, go through each one
+      for (var i = 0; i < data.comments.length; i++) {
+        console.log(data.comments[i])
+        // Constructs an li element to contain our noteText and a delete button
+        currentComment = $("<li class='list-group-item note'>")
+          .text(data.comments[i].commentText)
+          .append($("<button class='btn btn-danger note-delete'>x</button>"));
+        // Store the note id on the delete button for easy access when trying to delete
+        currentComment.children("button").data("_id", data.comments[i]._id);
+        // Adding our currentComment to the commentsToRender array
+        commentsToRender.push(currentComment);
+      }
+    }
+    // console.log(commentsToRender)
+    // Now append the commentsToRender to the note-container inside the note modal
+    $(".note-container").append(commentsToRender);
+  }
 
-  function handleNoteSave() {
+  function handleCommentSave() {
     // This function handles what happens when a user tries to save a new note for an article
     // Setting a variable to hold some formatted data about our note,
     // grabbing the note typed into the input box
@@ -195,25 +191,30 @@ $(document).ready(function () {
     var newComment = $(".bootbox-body textarea")
       .val()
       .trim();
+
     // If we actually have data typed into the note input field, format it
     // and post it to the "/api/notes" route and send the formatted commentData as well
-    if (commentData) {
+    if (newComment) {
       commentData = { _headlineId: $(this).data("article")._id, commentText: newComment };
-      $.post("/api/comments", commentData).then(function () {
+      console.log(commentData)
+      $.post("/api/comments", commentData).then(function (data) {
         // When complete, close the modal
+        console.log(data)
         bootbox.hideAll();
       });
     }
   }
 
-  function handleNoteDelete() {
+  function handleCommentDelete() {
     // This function handles the deletion of notes
     // First we grab the id of the note we want to delete
     // We stored this data on the delete button when we created it
+    // console.log($(this));
     var commentToDelete = $(this).data("_id");
+
     // Perform an DELETE request to "/api/notes/" with the id of the note we're deleting as a parameter
     $.ajax({
-      url: "/api/notes/" + commentToDelete,
+      url: "/api/comments/" + commentToDelete._id,
       method: "DELETE"
     }).then(function () {
       // When done, hide the modal

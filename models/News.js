@@ -19,7 +19,13 @@ const NewsSchema = new Schema({
         type: Boolean,
         require: true,
         default: false
-    }
+    },
+    comment: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Comment"
+        }
+    ]
 });
 
 // Creates the model for the database using mongoose model method
