@@ -1,4 +1,3 @@
-/* global bootbox */
 $(document).ready(function () {
   // Getting a reference to the article container div we will be rendering all articles inside of
   var articleContainer = $(".article-container");
@@ -7,12 +6,14 @@ $(document).ready(function () {
   $(document).on("click", ".btn.delete", handleNewsArticleDelete);
   $(document).on("click", ".btn.notes", handleNewsComments);
   $(document).on("click", ".btn.save", handleCommentSave);
+  $(document).on("click", ".scrape-new", handleNewsArticleScrape);
   $(document).on("click", ".btn.note-delete", handleCommentDelete);
   $(".clear").on("click", handleArticleClear);
+
+
   initPage()
   function initPage() {
     // Empty the article container, run an AJAX request for any saved headlines
-
     $.get("/api/headlines?saved=true").then(function (data) {
       articleContainer.empty();
       // If we have headlines, render them to the page
@@ -211,6 +212,25 @@ $(document).ready(function () {
       // When done, hide the modal
       bootbox.hideAll();
     });
+  }
+  function handleNewsArticleScrape() {
+    // This function handles the user clicking any "scrape new article" buttons
+
+    $.get("/api/fetch").then(function (data) {
+      // If we are able to successfully scrape the NYTIMES and compare the articles to those
+      // already in our collection, re render the articles on the page
+      // and let the user know how many unique articles we were able to save
+
+      bootbox.alert({
+        message: $("<h3 class='text-center m-top-80 modal-okay'>").text("Scraped for new News Articles"),
+      });
+    });
+    $(document).on("click", "btn.btn-primary", handleRedirect);
+  }
+
+  function handleRedirect() {
+    console.log("yes")
+    $(location).attr('href', '/');
   }
 
   function handleArticleClear() {

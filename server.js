@@ -6,11 +6,10 @@ const mongoose = require("mongoose");
 
 // Require Scraping tool dependencies
 // require axios
-const request = require("request")
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-// Require the models
+// Require the models and controller
 var database = require("./models");
 // Server connection port
 const PORT = process.env.PORT || 8080;
@@ -45,58 +44,50 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
 // ----------------------------------------------------------------
 
+// Renders home page
 app.get("/", function (req, res) {
     res.render("index");
 });
 
+// Renders saved page
 app.get("/saved", function (req, res) {
     res.render("saved");
 });
 
+// Request all news articles API endpoint 
 app.get("/api/headlines", function (req, res) {
     database.News.find({ saved: req.query.saved })
         .then(function (dbNews) {
             res.json(dbNews);
-            // res.json(dbNews)
         })
         .catch(function (error) {
             res.json(error)
         })
 });
 
+// Request to fetch and save news articles
 app.get("/api/fetch", function (req, res) {
-    let results = [];
-    request("https://www.naija.ng/", function (error, response, html) {
+    axios.get("https://www.naija.ng/").then(response => {
         // Load Cheerio
-        let $ = cheerio.load(html);
-
+        let $ = cheerio.load(response.data);
+        let results = {};
+        let num = 0;
         // Select each element in the HTML body to scrape data
         $("li.news-list__item").each(function (i, element) {
-
-            results.push({
-                headline: $(element).children("a").text(),
-                url: $(element).children("a").attr("href")
-            });
-        });
-
-        results.map((news) => {
-            database.News.create({
-                "headline": news.headline,
-                "url": news.url,
-            },
-                {
-                    upsert: true, new: true, setDefaultsOnInsert: true
-                }).then(function (dbNews) {
+            results.headline = $(element).children("a").text();
+            results.url = $(element).children("a").attr("href");
+            // Check if scraped news article have been saved in database, if not insert it
+            database.News.update({ headline: results.headline }, results, { upsert: true, new: true, setDefaultsOnInsert: true })
+                .then((dbNews) => {
+                    res.json(dbNews);
                 }).catch(function (error) {
                     return res.json(error);
                 });
         });
-        res.json(results.length);
     });
-
 });
 
-// Route for grabbing a specific Article by id, and updatindg the save field to true
+// Route for grabbing a specific Article by id, and updating the save field to true
 app.put("/api/headlines/:id", function (req, res) {
     database.News.update({ _id: req.params.id }, { saved: req.body.saved })
         .then(function (dbNews) {
@@ -109,23 +100,19 @@ app.put("/api/headlines/:id", function (req, res) {
 
 // Route for grabbing a specific Article by id, populate it with it's comment(s)
 app.get("/api/comments/:id", function (req, res) {
-    // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
     database.News.findOne({ _id: req.params.id })
-        // ..and populate all of the notes associated with it
         .populate("comment")
         .then(function (dbNews) {
-            // If we were able to successfully find an Article with the given id, send it back to the client
             res.json(dbNews);
         })
         .catch(function (err) {
-            // If an error occurred, send it to the client
             res.json(err);
         });
 });
 
-// Route for saving/updating an Article's associated Note
+// Route for saving/updating an news articles associated Comment
 app.post("/api/comments", function (req, res) {
-    // Create a new note and pass the req.body to the entry
+    // Create a new comment and pass the req.body to the entry
     database.Comment.create(req.body)
         .then(function (dbComment) {
             // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
@@ -134,11 +121,9 @@ app.post("/api/comments", function (req, res) {
             return database.News.findOneAndUpdate({ _id: req.body._headlineId }, { $push: { comment: dbComment._id } }, { new: true });
         })
         .then(function (dbNews) {
-            // If we were able to successfully update an Article, send it back to the client
             res.json(dbNews);
         })
         .catch(function (err) {
-            // If an error occurred, send it to the client
             res.json(err);
         });
 });
@@ -154,9 +139,18 @@ app.delete("/api/comments/:id", function (req, res) {
         })
 });
 
-// Route for deleting all the data from the database
+// Route for deleting all the articles from the database
 app.get("/api/clear", function (req, res) {
     database.News.remove({})
+        .then(function (dbNews) {
+
+            res.json(dbNews);
+        })
+        .catch(function (error) {
+            res.json(error);
+        })
+
+    database.Comment.remove({})
         .then(function (dbNews) {
 
             res.json(dbNews);
@@ -168,6 +162,6 @@ app.get("/api/clear", function (req, res) {
 // ------------------------------------------------------------
 // Open the port for server to listen to requests
 app.listen(PORT, "0.0.0.0", function () {
-    console.log("App running on port " + PORT);
+    // console.log("App running on port " + PORT);
 });
 
