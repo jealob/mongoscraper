@@ -235,13 +235,8 @@ $(document).ready(function () {
         message: $("<h3 class='text-center m-top-80'>").text(displayMessage),
       });
     });
-    // $(document).on("click", "btn.btn-primary", handleRedirect);
-  }
 
-  // function handleRedirect() {
-  //   console.log("yes")
-  //   $(location).attr('href', '/');
-  // }
+  }
 
   function handleArticleClear() {
     $.get("api/clear")
