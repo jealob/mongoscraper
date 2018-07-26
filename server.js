@@ -100,9 +100,6 @@ app.get("/api/fetch", function (req, res) {
 
 });
 
-function callback(number) {
-    res.json(number);
-}
 // Route for grabbing a specific Article by id, and updating the save field to true
 app.put("/api/headlines/:id", function (req, res) {
     database.News.update({ _id: req.params.id }, { saved: req.body.saved })
@@ -156,7 +153,7 @@ app.delete("/api/comments/:id", function (req, res) {
 });
 
 // Route for deleting all the articles from the database
-app.get("/api/clear", function (req, res) {
+app.delete("/api/clear", function (req, res) {
     database.News.remove({})
         .then(function (dbNews) {
 

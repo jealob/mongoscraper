@@ -239,7 +239,7 @@ $(document).ready(function () {
   }
 
   function handleArticleClear() {
-    $.get("api/clear")
+    $.delete("api/clear")
       .then(function () {
         articleContainer.empty();
         initPage();
