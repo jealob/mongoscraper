@@ -215,11 +215,14 @@ $(document).ready(function () {
   }
   function handleNewsArticleScrape() {
     // This function handles the user clicking any "scrape new article" buttons
-
+    bootbox.alert({
+      message: $("<h3 class='text-center m-top-80'>").text("Scraping... Please Wait"),
+    });
     $.get("/api/fetch").then(function (data) {
       // If we are able to successfully scrape the NYTIMES and compare the articles to those
       // already in our collection, re render the articles on the page
       // and let the user know how many unique articles we were able to save
+      bootbox.hideAll();
       let displayMessage = "";
       if (data > 1) {
         displayMessage = `Scraped ${data} new News Articles`;
@@ -235,14 +238,18 @@ $(document).ready(function () {
         message: $("<h3 class='text-center m-top-80'>").text(displayMessage),
       });
     });
-
   }
 
   function handleArticleClear() {
-    $.delete("api/clear")
-      .then(function () {
-        articleContainer.empty();
-        initPage();
+    $.ajax({
+      url: "/api/clear",
+      method: "DELETE"
+    }).then(function () {
+      articleContainer.empty();
+      bootbox.alert({
+        message: $("<h3 class='text-center m-top-80'>").text("All News Articles cleared"),
       });
+      initPage();
+    });
   }
 });
