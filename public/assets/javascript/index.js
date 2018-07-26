@@ -121,9 +121,19 @@ $(document).ready(function () {
       // If we are able to successfully scrape the NYTIMES and compare the articles to those
       // already in our collection, re render the articles on the page
       // and let the user know how many unique articles we were able to save
+      let displayMessage = "";
+      if (data > 1) {
+        displayMessage = `Scraped ${data} new News Articles`;
+      }
+      else if (data === 1) {
+        displayMessage = `Scraped ${data} new News Article`;
+      }
+      else {
+        displayMessage = `No new News Articles was scraped at this time`;
+      }
 
       bootbox.alert({
-        message: $("<h3 class='text-center m-top-80'>").text("Scraped for new News Articles"),
+        message: $("<h3 class='text-center m-top-80'>").text(displayMessage),
       });
       initPage();
     });

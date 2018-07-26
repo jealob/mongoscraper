@@ -67,26 +67,42 @@ app.get("/api/headlines", function (req, res) {
 
 // Request to fetch and save news articles
 app.get("/api/fetch", function (req, res) {
+    let results = [];
+    let newArticleNum = 0;
     axios.get("https://www.naija.ng/").then(response => {
         // Load Cheerio
         let $ = cheerio.load(response.data);
-        let results = {};
-        let num = 0;
         // Select each element in the HTML body to scrape data
         $("li.news-list__item").each(function (i, element) {
-            results.headline = $(element).children("a").text();
-            results.url = $(element).children("a").attr("href");
-            // Check if scraped news article have been saved in database, if not insert it
-            database.News.update({ headline: results.headline }, results, { upsert: true, new: true, setDefaultsOnInsert: true })
+            results[i] = {
+                headline: $(element).children("a").text(),
+                url: $(element).children("a").attr("href"),
+            }
+        });
+
+        let updatedDB = 0;
+        // Check if scraped news article have been saved in database, if not insert it
+        for (let j in results) {
+            database.News.update({ headline: results[j].headline }, results[j], { upsert: true, new: true, setDefaultsOnInsert: true })
                 .then((dbNews) => {
-                    res.json(dbNews);
+                    updatedDB++;
+                    if (dbNews.upserted) {
+                        newArticleNum++
+                    }
+                    if (updatedDB === (results.length - 0)) {
+                        res.json(newArticleNum);
+                    }
                 }).catch(function (error) {
                     return res.json(error);
                 });
-        });
+        }
     });
+
 });
 
+function callback(number) {
+    res.json(number);
+}
 // Route for grabbing a specific Article by id, and updating the save field to true
 app.put("/api/headlines/:id", function (req, res) {
     database.News.update({ _id: req.params.id }, { saved: req.body.saved })
@@ -162,6 +178,6 @@ app.get("/api/clear", function (req, res) {
 // ------------------------------------------------------------
 // Open the port for server to listen to requests
 app.listen(PORT, "0.0.0.0", function () {
-    // console.log("App running on port " + PORT);
+    console.log("App running on port " + PORT);
 });
 
